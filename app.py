@@ -13,6 +13,7 @@ from config import Config
 from database import get_db, init_db
 from auth import get_current_user, login_required, role_required, can_access_file
 from audit import log_action
+import gdrive
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -25,7 +26,8 @@ def inject_globals():
     return {
         'current_user': get_current_user(),
         'categories': Config.CATEGORIES,
-        'now': datetime.datetime.now()
+        'now': datetime.datetime.now(),
+        'gdrive_enabled': gdrive.is_gdrive_enabled()
     }
 
 @app.template_filter('filesize')
@@ -212,21 +214,27 @@ def upload():
         file_uuid = str(uuid.uuid4())
         disk_path = os.path.join(Config.STORAGE_FOLDER, file_uuid)
 
-        # Save to disk
+        # Save to disk as local copy / cache
         uploaded_file.save(disk_path)
         file_size = os.path.getsize(disk_path)
+
+        # Upload to Google Drive if configured
+        drive_file_id = None
+        if gdrive.is_gdrive_enabled():
+            with open(disk_path, 'rb') as f_obj:
+                drive_file_id, _ = gdrive.upload_to_drive(f_obj, orig_filename, mime_type)
 
         # Insert database record
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute('''
         INSERT INTO files (
-            file_uuid, filename, file_size, mime_type, extension,
+            file_uuid, drive_file_id, filename, file_size, mime_type, extension,
             classification, category, title, description,
             uploader_id, uploader_name, access_pin
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            file_uuid, orig_filename, file_size, mime_type, ext,
+            file_uuid, drive_file_id, orig_filename, file_size, mime_type, ext,
             classification, category, title, description,
             user['id'], user['full_name'], access_pin
         ))
@@ -235,8 +243,9 @@ def upload():
         conn.close()
 
         # Audit log
+        storage_provider = "Google Drive" if drive_file_id else "Local Storage"
         log_action(user['id'], user['username'], 'UPLOAD', 'FILE', new_file_id,
-                   f"Uploaded '{orig_filename}' [{classification.upper()}] under category '{category}'")
+                   f"Uploaded '{orig_filename}' [{classification.upper()}] via {storage_provider} under '{category}'")
 
         flash(f"File '{title}' uploaded successfully into the {classification.title()} repository!", 'success')
         return redirect(url_for('file_detail', file_id=new_file_id))
@@ -284,6 +293,14 @@ def file_detail(file_id):
                         preview_content = f.read(15000) # Read up to 15KB for preview
                 except Exception as e:
                     preview_error = str(e)
+        elif file_row['drive_file_id'] and gdrive.is_gdrive_enabled():
+            if file_row['extension'] in {'txt', 'md', 'py', 'json', 'csv', 'js', 'html', 'css'}:
+                try:
+                    fh = gdrive.download_from_drive(file_row['drive_file_id'])
+                    if fh:
+                        preview_content = fh.read().decode('utf-8', errors='replace')[:15000]
+                except Exception as e:
+                    preview_error = str(e)
 
     conn.close()
 
@@ -322,10 +339,28 @@ def download_file(file_id):
         flash(reason, 'danger')
         return redirect(url_for('file_detail', file_id=file_id))
 
+    # Check if stored in Google Drive
+    if file_row['drive_file_id'] and gdrive.is_gdrive_enabled():
+        fh = gdrive.download_from_drive(file_row['drive_file_id'])
+        if fh:
+            cursor.execute("UPDATE files SET download_count = download_count + 1 WHERE id = ?", (file_id,))
+            conn.commit()
+            conn.close()
+            log_action(user['id'] if user else None,
+                       user['username'] if user else 'Anonymous',
+                       'DOWNLOAD', 'FILE', file_id,
+                       f"Downloaded file '{file_row['filename']}' from Google Drive [{file_row['classification'].upper()}]")
+            return send_file(
+                fh,
+                as_attachment=True,
+                download_name=file_row['filename'],
+                mimetype=file_row['mime_type'] or 'application/octet-stream'
+            )
+
     disk_path = os.path.join(Config.STORAGE_FOLDER, file_row['file_uuid'])
     if not os.path.exists(disk_path):
         conn.close()
-        abort(404, description="Physical storage file missing on disk")
+        abort(404, description="Physical storage file missing on disk or cloud")
 
     # Increment download count
     cursor.execute("UPDATE files SET download_count = download_count + 1 WHERE id = ?", (file_id,))
@@ -366,6 +401,18 @@ def view_raw_file(file_id):
         conn.close()
         abort(403, description=reason)
 
+    # Stream from Google Drive if available
+    if file_row['drive_file_id'] and gdrive.is_gdrive_enabled():
+        fh = gdrive.download_from_drive(file_row['drive_file_id'])
+        if fh:
+            conn.close()
+            return send_file(
+                fh,
+                as_attachment=False,
+                download_name=file_row['filename'],
+                mimetype=file_row['mime_type'] or 'application/octet-stream'
+            )
+
     disk_path = os.path.join(Config.STORAGE_FOLDER, file_row['file_uuid'])
     conn.close()
 
@@ -396,6 +443,10 @@ def delete_file(file_id):
         conn.close()
         flash('You are not authorized to delete this file.', 'danger')
         return redirect(url_for('file_detail', file_id=file_id))
+
+    # If stored in Google Drive, remove from Drive as well
+    if file_row['drive_file_id'] and gdrive.is_gdrive_enabled():
+        gdrive.delete_from_drive(file_row['drive_file_id'])
 
     # Mark as archived or remove
     cursor.execute("UPDATE files SET is_archived = 1 WHERE id = ?", (file_id,))
@@ -461,7 +512,7 @@ def access_share_link(token):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
-    SELECT sl.*, f.filename, f.file_uuid, f.file_size, f.mime_type, f.title, f.classification, f.description
+    SELECT sl.*, f.filename, f.file_uuid, f.file_size, f.mime_type, f.title, f.classification, f.description, f.drive_file_id
     FROM share_links sl
     JOIN files f ON sl.file_id = f.id
     WHERE sl.token = ? AND f.is_archived = 0
@@ -486,7 +537,6 @@ def access_share_link(token):
 
     # Handle download action
     if request.args.get('download') == '1':
-        disk_path = os.path.join(Config.STORAGE_FOLDER, share['file_uuid'])
         cursor.execute("UPDATE share_links SET download_count = download_count + 1 WHERE id = ?", (share['id'],))
         cursor.execute("UPDATE files SET download_count = download_count + 1 WHERE id = ?", (share['file_id'],))
         conn.commit()
@@ -495,6 +545,12 @@ def access_share_link(token):
         log_action(None, 'Token Holder', 'SHARE_DOWNLOAD', 'FILE', share['file_id'],
                    f"Downloaded via token '{token}'")
 
+        if share['drive_file_id'] and gdrive.is_gdrive_enabled():
+            fh = gdrive.download_from_drive(share['drive_file_id'])
+            if fh:
+                return send_file(fh, as_attachment=True, download_name=share['filename'], mimetype=share['mime_type'])
+
+        disk_path = os.path.join(Config.STORAGE_FOLDER, share['file_uuid'])
         return send_file(disk_path, as_attachment=True, download_name=share['filename'], mimetype=share['mime_type'])
 
     conn.close()

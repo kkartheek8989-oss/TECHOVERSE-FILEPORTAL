@@ -46,11 +46,19 @@
                 <span>DEPARTMENT OF STUDENT AFFAIRS & TECHNOLOGY</span>
             </div>
             <div class="flex items-center space-x-4 text-slate-300">
-                <span class="flex items-center gap-1 text-emerald-400">
-                    <i class="fa-solid fa-shield-halved"></i> Role-Based Access Control Active
+                {% if gdrive_enabled %}
+                <span class="flex items-center gap-1.5 text-cyan-400 font-semibold">
+                    <i class="fa-brands fa-google-drive"></i> Google Drive Backend Active
                 </span>
+                {% else %}
+                <span class="flex items-center gap-1.5 text-slate-400">
+                    <i class="fa-solid fa-hard-drive text-slate-500"></i> Local Storage Mode
+                </span>
+                {% endif %}
                 <span class="text-slate-600">|</span>
-                <span>Free & Open Source Portal</span>
+                <span class="flex items-center gap-1 text-emerald-400">
+                    <i class="fa-solid fa-shield-halved"></i> 3-Tier Security
+                </span>
             </div>
         </div>
     </div>

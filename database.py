@@ -35,6 +35,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS files (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         file_uuid TEXT UNIQUE NOT NULL,
+        drive_file_id TEXT,
         filename TEXT NOT NULL,
         file_size INTEGER NOT NULL,
         mime_type TEXT,
@@ -53,6 +54,13 @@ def init_db():
         FOREIGN KEY (uploader_id) REFERENCES users (id)
     )
     ''')
+
+    # Migration check: Ensure drive_file_id column exists
+    cursor.execute("PRAGMA table_info(files)")
+    cols = [col[1] for col in cursor.fetchall()]
+    if 'drive_file_id' not in cols:
+        cursor.execute("ALTER TABLE files ADD COLUMN drive_file_id TEXT")
+        conn.commit()
 
     # Share Links Table
     cursor.execute('''
