@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Security Audit Logs | TechnoVault - Hari University{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-extrabold text-white flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-cyan-400"></i>
+                Compliance & Security Audit Trail
+            </h1>
+            <p class="text-xs text-slate-400 mt-0.5">
+                Immutable activity records for all file transfers, confidentiality verifications, and permission updates.
+            </p>
+        </div>
+        <div class="text-xs text-slate-400 font-mono">
+            Showing latest <strong class="text-white">{{ logs|length }}</strong> events
+        </div>
+    </div>
+
+    <!-- Audit Table -->
+    <div class="bg-slate-900 rounded-2xl border border-slate-800 overflow-hidden shadow-xl">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-slate-800 text-left text-xs font-mono">
+                <thead class="bg-slate-950 text-slate-400 uppercase tracking-wider">
+                    <tr>
+                        <th class="px-4 py-3">Timestamp</th>
+                        <th class="px-4 py-3">Operator</th>
+                        <th class="px-4 py-3">Action</th>
+                        <th class="px-4 py-3">Target</th>
+                        <th class="px-4 py-3">Event Details</th>
+                        <th class="px-4 py-3">IP Address</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800 text-slate-300">
+                    {% for l in logs %}
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="px-4 py-3 text-slate-500 whitespace-nowrap">
+                            {{ l.created_at }}
+                        </td>
+                        <td class="px-4 py-3 font-bold text-cyan-400">
+                            {{ l.user_identifier }}
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold
+                                {% if l.action in ['DOWNLOAD', 'VIEW'] %} bg-cyan-950 text-cyan-400 border border-cyan-800
+                                {% elif l.action in ['UPLOAD'] %} bg-emerald-950 text-emerald-400 border border-emerald-800
+                                {% elif l.action in ['DELETE', 'DOWNLOAD_BLOCKED'] %} bg-red-950 text-red-400 border border-red-800
+                                {% elif l.action in ['PERMISSION_CHANGE', 'SHARE_GENERATE'] %} bg-amber-950 text-amber-400 border border-amber-800
+                                {% else %} bg-slate-800 text-slate-300
+                                {% endif %}">
+                                {{ l.action }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-slate-400">
+                            {{ l.target_type }} #{{ l.target_id }}
+                        </td>
+                        <td class="px-4 py-3 text-slate-200">
+                            {{ l.details }}
+                        </td>
+                        <td class="px-4 py-3 text-slate-500">
+                            {{ l.ip_address }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

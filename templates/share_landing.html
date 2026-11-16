@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Shared File | TechnoVault - Technoverse Club, Hari University{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-6 pt-6">
+
+    <div class="text-center space-y-2">
+        <div class="w-16 h-16 rounded-2xl bg-cyan-950/80 border border-cyan-800 text-cyan-400 flex items-center justify-center mx-auto text-2xl shadow-xl shadow-cyan-950/50">
+            <i class="fa-solid fa-file-arrow-down"></i>
+        </div>
+        <h1 class="text-2xl font-extrabold text-white">Technoverse Secure Document Share</h1>
+        <p class="text-xs text-slate-400">Hari University Official Cloud Distribution Link</p>
+    </div>
+
+    <!-- Download Card -->
+    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl space-y-6">
+        
+        <div class="space-y-1">
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-[10px] font-bold bg-cyan-950 text-cyan-400 border border-cyan-800 uppercase font-mono">
+                AUTHENTICATED TOKEN
+            </div>
+            <h2 class="text-xl font-bold text-white pt-1">{{ share.title }}</h2>
+            <p class="text-xs text-slate-400 font-mono">{{ share.filename }} ({{ share.file_size|filesize }})</p>
+        </div>
+
+        {% if share.description %}
+        <div class="bg-slate-950 p-3.5 rounded-xl border border-slate-800 text-xs text-slate-300">
+            {{ share.description }}
+        </div>
+        {% endif %}
+
+        <div class="space-y-2 pt-2">
+            <a href="{{ url_for('access_share_link', token=share.token, download='1') }}"
+               class="w-full py-3 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-cyan-600/30 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-download"></i>
+                <span>Download Document Now</span>
+            </a>
+        </div>
+
+        <div class="text-center text-[11px] text-slate-500 font-mono space-y-1">
+            {% if share.expires_at %}
+            <div>Valid until: {{ share.expires_at }}</div>
+            {% endif %}
+            {% if share.max_downloads %}
+            <div>Downloads Remaining: {{ share.max_downloads - share.download_count }} of {{ share.max_downloads }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

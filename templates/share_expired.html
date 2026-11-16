@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Link Inactive | TechnoVault - Hari University{% endblock %}
+
+{% block content %}
+<div class="max-w-md mx-auto text-center space-y-6 pt-12">
+    <div class="w-16 h-16 rounded-2xl bg-red-950 border border-red-800 text-red-400 flex items-center justify-center mx-auto text-2xl">
+        <i class="fa-solid fa-link-slash"></i>
+    </div>
+    <div class="space-y-2">
+        <h1 class="text-2xl font-extrabold text-white">Share Link Inactive</h1>
+        <p class="text-sm text-slate-400 leading-relaxed">
+            {{ message or "This secure link has expired or reached its maximum download threshold." }}
+        </p>
+    </div>
+    <div>
+        <a href="{{ url_for('index') }}" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-5 py-2.5 rounded-xl transition">
+            Return to Portal Home
+        </a>
+    </div>
+</div>
+{% endblock %}

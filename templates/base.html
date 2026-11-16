@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}TechnoVault | Technoverse Club - Hari University{% endblock %}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eefbfb',
+                            100: '#d5f6f7',
+                            400: '#38bdf8',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490',
+                        },
+                        confidential: '#ef4444',
+                        member: '#8b5cf6',
+                        public: '#10b981'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="min-h-full flex flex-col font-sans antialiased bg-slate-950 text-slate-100 selection:bg-cyan-500 selection:text-white">
+
+    <!-- Top Security & Organization Bar -->
+    <div class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border-b border-slate-800 text-xs py-1.5 px-4">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-2">
+            <div class="flex items-center space-x-3 text-slate-400">
+                <span class="inline-flex items-center gap-1.5 text-cyan-400 font-semibold uppercase tracking-wider">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    HARI UNIVERSITY
+                </span>
+                <span class="text-slate-600">|</span>
+                <span>DEPARTMENT OF STUDENT AFFAIRS & TECHNOLOGY</span>
+            </div>
+            <div class="flex items-center space-x-4 text-slate-300">
+                <span class="flex items-center gap-1 text-emerald-400">
+                    <i class="fa-solid fa-shield-halved"></i> Role-Based Access Control Active
+                </span>
+                <span class="text-slate-600">|</span>
+                <span>Free & Open Source Portal</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Brand & Club Title -->
+                <div class="flex items-center space-x-3">
+                    <a href="{{ url_for('index') }}" class="flex items-center space-x-3 group">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition transform">
+                            <i class="fa-solid fa-cube text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-cyan-200 to-cyan-400 bg-clip-text text-transparent">
+                                    TECHNOVAULT
+                                </span>
+                                <span class="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800 px-1.5 py-0.5 rounded font-mono font-medium">v2.4</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 -mt-1 font-medium">Technoverse Club • Hari University</p>
+                        </div>
+                    </a>
+
+                    <!-- Nav Links -->
+                    <nav class="hidden md:flex items-center space-x-1 pl-6">
+                        <a href="{{ url_for('index') }}" class="px-3 py-2 rounded-lg text-sm font-medium {% if request.endpoint == 'index' %}bg-slate-800 text-cyan-400{% else %}text-slate-300 hover:text-white hover:bg-slate-800/60{% endif %} transition">
+                            <i class="fa-solid fa-folder-tree mr-1.5 opacity-70"></i>All Repositories
+                        </a>
+                        <a href="{{ url_for('circulars') }}" class="px-3 py-2 rounded-lg text-sm font-medium {% if request.endpoint == 'circulars' %}bg-slate-800 text-emerald-400{% else %}text-slate-300 hover:text-emerald-400 hover:bg-slate-800/60{% endif %} transition">
+                            <i class="fa-solid fa-bullhorn mr-1.5 text-emerald-400"></i>Circulars & Notices
+                        </a>
+                        {% if current_user and current_user.role in ['core', 'admin'] %}
+                        <a href="{{ url_for('vault') }}" class="px-3 py-2 rounded-lg text-sm font-medium {% if request.endpoint == 'vault' %}bg-red-950/60 text-red-400 border border-red-800/50{% else %}text-red-400/80 hover:text-red-300 hover:bg-red-950/30{% endif %} transition">
+                            <i class="fa-solid fa-vault mr-1.5 text-red-400"></i>Confidential Vault
+                        </a>
+                        <a href="{{ url_for('logs') }}" class="px-3 py-2 rounded-lg text-sm font-medium {% if request.endpoint == 'logs' %}bg-slate-800 text-cyan-400{% else %}text-slate-300 hover:text-white hover:bg-slate-800/60{% endif %} transition">
+                            <i class="fa-solid fa-clock-rotate-left mr-1.5 opacity-70"></i>Audit Logs
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+
+                <!-- Right Header Actions -->
+                <div class="flex items-center space-x-3">
+                    {% if current_user %}
+                        <a href="{{ url_for('upload') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md shadow-cyan-600/20 transition transform hover:-translate-y-0.5">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <span>Upload File</span>
+                        </a>
+
+                        <!-- User Profile Dropdown / Badge -->
+                        <div class="flex items-center gap-2 pl-2 border-l border-slate-800">
+                            <div class="text-right hidden sm:block">
+                                <div class="text-sm font-medium text-slate-200">{{ current_user.full_name }}</div>
+                                <div class="flex items-center justify-end gap-1.5">
+                                    {% if current_user.role == 'admin' %}
+                                        <span class="inline-flex items-center px-1.5 py-0.2 text-[10px] font-bold rounded bg-amber-950 text-amber-400 border border-amber-800">ADMIN</span>
+                                    {% elif current_user.role == 'core' %}
+                                        <span class="inline-flex items-center px-1.5 py-0.2 text-[10px] font-bold rounded bg-red-950 text-red-400 border border-red-800">CORE LEAD</span>
+                                    {% elif current_user.role == 'member' %}
+                                        <span class="inline-flex items-center px-1.5 py-0.2 text-[10px] font-bold rounded bg-purple-950 text-purple-400 border border-purple-800">MEMBER</span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-1.5 py-0.2 text-[10px] font-bold rounded bg-slate-800 text-slate-400 border border-slate-700">STUDENT</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {% if current_user.role == 'admin' %}
+                            <a href="{{ url_for('users_list') }}" title="Manage Members" class="p-2 text-slate-400 hover:text-cyan-400 bg-slate-800/80 hover:bg-slate-800 rounded-lg transition">
+                                <i class="fa-solid fa-users-gear"></i>
+                            </a>
+                            {% endif %}
+
+                            <a href="{{ url_for('logout') }}" title="Logout" class="p-2 text-slate-400 hover:text-red-400 bg-slate-800/80 hover:bg-slate-800 rounded-lg transition">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                            </a>
+                        </div>
+                    {% else %}
+                        <a href="{{ url_for('circulars') }}" class="text-sm font-medium text-slate-300 hover:text-white px-3 py-2 rounded-lg">
+                            Public Circulars
+                        </a>
+                        <a href="{{ url_for('login') }}" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-medium px-4 py-2 rounded-lg border border-slate-700 transition">
+                            <i class="fa-solid fa-right-to-bracket text-cyan-400"></i>
+                            <span>Sign In / Demo</span>
+                        </a>
+                        <a href="{{ url_for('register') }}" class="hidden sm:inline-flex items-center gap-1.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-sm font-medium px-4 py-2 rounded-lg shadow transition">
+                            Join Club
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-3 p-3.5 rounded-xl border flex items-center justify-between transition-all shadow-md
+                        {% if category == 'success' %} bg-emerald-950/60 border-emerald-800 text-emerald-200
+                        {% elif category == 'danger' %} bg-red-950/60 border-red-800 text-red-200
+                        {% elif category == 'warning' %} bg-amber-950/60 border-amber-800 text-amber-200
+                        {% else %} bg-slate-900 border-cyan-800 text-cyan-200
+                        {% endif %}">
+                        <div class="flex items-center space-x-3 text-sm">
+                            <i class="fa-solid 
+                                {% if category == 'success' %}fa-circle-check text-emerald-400
+                                {% elif category == 'danger' %}fa-triangle-exclamation text-red-400
+                                {% elif category == 'warning' %}fa-shield-cat text-amber-400
+                                {% else %}fa-circle-info text-cyan-400
+                                {% endif %} text-base"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-white p-1">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <!-- Main Dynamic Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-950 border-t border-slate-900 mt-12 py-8 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-7 h-7 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-cyan-400">
+                    <i class="fa-solid fa-cube text-sm"></i>
+                </div>
+                <div>
+                    <span class="font-bold text-slate-300">TechnoVault</span> — Official File & Document Cloud Portal
+                    <p class="text-[11px] text-slate-500">Technoverse Club, Hari University. Built with Python & Flask.</p>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center gap-6 text-slate-400">
+                <span class="hover:text-cyan-400 cursor-pointer"><i class="fa-solid fa-shield mr-1"></i>3-Tier Security</span>
+                <span class="hover:text-cyan-400 cursor-pointer"><i class="fa-solid fa-server mr-1"></i>Isolated Storage</span>
+                <span class="hover:text-cyan-400 cursor-pointer"><i class="fa-solid fa-file-contract mr-1"></i>Audit Traced</span>
+                <span class="text-slate-600">|</span>
+                <span>© 2026 Hari University</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- App Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

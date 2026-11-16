@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | TechnoVault - Technoverse Club, Hari University{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Hero / Club Header Card -->
+    <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950/40 to-slate-900 border border-slate-800 p-6 sm:p-8 shadow-xl">
+        <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute right-1/3 -top-10 w-72 h-72 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/80 text-cyan-300 text-xs font-semibold">
+                    <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+                    TECHNOVERSE CLOUD REPOSITORY & ARCHIVES
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                    Technoverse File Hosting & Notice Portal
+                </h1>
+                <p class="text-sm text-slate-400 max-w-2xl leading-relaxed">
+                    Official file distribution network for <strong class="text-slate-200">Hari University</strong>. Securely archives public university circulars, technical workshop materials, student project assets, and confidential executive committee records.
+                </p>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="flex flex-wrap items-center gap-3">
+                <a href="{{ url_for('circulars') }}" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 text-sm font-semibold px-4 py-2.5 rounded-xl border border-emerald-900/60 shadow transition">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <span>Public Circulars</span>
+                </a>
+                {% if current_user and current_user.role in ['core', 'admin'] %}
+                <a href="{{ url_for('vault') }}" class="inline-flex items-center gap-2 bg-red-950/60 hover:bg-red-900/60 text-red-300 text-sm font-semibold px-4 py-2.5 rounded-xl border border-red-800 shadow transition">
+                    <i class="fa-solid fa-vault"></i>
+                    <span>Confidential Vault</span>
+                </a>
+                {% endif %}
+                <a href="{{ url_for('upload') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-cyan-600/20 transition">
+                    <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                    <span>Upload Document</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-slate-800/80">
+            <div class="bg-slate-900/60 backdrop-blur rounded-xl p-3.5 border border-slate-800">
+                <span class="text-xs text-slate-400 block font-medium">Total Files Stored</span>
+                <span class="text-2xl font-bold text-white mt-1 block">{{ total_files }}</span>
+                <span class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5"><i class="fa-solid fa-database text-cyan-400"></i> Encrypted UUID Storage</span>
+            </div>
+            <div class="bg-slate-900/60 backdrop-blur rounded-xl p-3.5 border border-slate-800">
+                <span class="text-xs text-emerald-400 block font-medium">Public Circulars</span>
+                <span class="text-2xl font-bold text-white mt-1 block">{{ public_files }}</span>
+                <span class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5"><i class="fa-solid fa-globe text-emerald-400"></i> Open for all Students</span>
+            </div>
+            <div class="bg-slate-900/60 backdrop-blur rounded-xl p-3.5 border border-slate-800">
+                <span class="text-xs text-purple-400 block font-medium">Member Repositories</span>
+                <span class="text-2xl font-bold text-white mt-1 block">{{ member_files }}</span>
+                <span class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5"><i class="fa-solid fa-users text-purple-400"></i> Club Member Access</span>
+            </div>
+            <div class="bg-slate-900/60 backdrop-blur rounded-xl p-3.5 border border-slate-800">
+                <span class="text-xs text-red-400 block font-medium">Confidential Vault</span>
+                <span class="text-2xl font-bold text-white mt-1 block">{{ confidential_files }}</span>
+                <span class="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5"><i class="fa-solid fa-lock text-red-400"></i> Core & Faculty Admin</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 space-y-4">
+        
+        <!-- Tab Classification Switcher -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div class="flex flex-wrap items-center gap-2">
+                <a href="{{ url_for('index', classification='all', category=selected_category, q=search_query) }}"
+                   class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition {% if selected_classification == 'all' %}bg-cyan-600 text-white shadow-md shadow-cyan-600/30{% else %}bg-slate-800 text-slate-300 hover:bg-slate-700{% endif %}">
+                    All Files ({{ total_files }})
+                </a>
+                <a href="{{ url_for('index', classification='public', category=selected_category, q=search_query) }}"
+                   class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {% if selected_classification == 'public' %}bg-emerald-600 text-white shadow-md shadow-emerald-600/30{% else %}bg-slate-800 text-emerald-400 hover:bg-slate-700{% endif %}">
+                    <i class="fa-solid fa-bullhorn text-[11px]"></i> Public Circulars ({{ public_files }})
+                </a>
+                <a href="{{ url_for('index', classification='member', category=selected_category, q=search_query) }}"
+                   class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {% if selected_classification == 'member' %}bg-purple-600 text-white shadow-md shadow-purple-600/30{% else %}bg-slate-800 text-purple-400 hover:bg-slate-700{% endif %}">
+                    <i class="fa-solid fa-users text-[11px]"></i> Member Repositories ({{ member_files }})
+                </a>
+                {% if current_user and current_user.role in ['core', 'admin'] %}
+                <a href="{{ url_for('index', classification='confidential', category=selected_category, q=search_query) }}"
+                   class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 {% if selected_classification == 'confidential' %}bg-red-600 text-white shadow-md shadow-red-600/30{% else %}bg-slate-800 text-red-400 hover:bg-slate-700{% endif %}">
+                    <i class="fa-solid fa-shield-halved text-[11px]"></i> Confidential ({{ confidential_files }})
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Total Results badge -->
+            <div class="text-xs text-slate-400 font-medium">
+                Showing <span class="text-cyan-400 font-bold">{{ files|length }}</span> documents
+            </div>
+        </div>
+
+        <!-- Search & Category Form -->
+        <form method="GET" action="{{ url_for('index') }}" class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+            <input type="hidden" name="classification" value="{{ selected_classification }}">
+
+            <!-- Search input -->
+            <div class="relative sm:col-span-8">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search by title, filename, circular reference..."
+                       class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+            </div>
+
+            <!-- Category Filter -->
+            <div class="sm:col-span-3">
+                <select name="category" onchange="this.form.submit()"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition">
+                    <option value="all">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Submit button -->
+            <div class="sm:col-span-1">
+                <button type="submit" class="w-full h-full bg-slate-800 hover:bg-cyan-600 text-white text-sm font-semibold rounded-xl flex items-center justify-center transition">
+                    <i class="fa-solid fa-filter"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Files Listing Grid / Cards -->
+    {% if files %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {% for file in files %}
+        <div class="bg-slate-900 rounded-2xl border border-slate-800 p-5 hover:border-slate-700 transition flex flex-col justify-between group shadow-lg">
+            <div>
+                <!-- Top Card Bar: Classification Badge & Category -->
+                <div class="flex items-center justify-between gap-2 mb-3">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold tracking-wide uppercase
+                        {% if file.classification == 'public' %} bg-emerald-950/80 text-emerald-400 border border-emerald-800/80
+                        {% elif file.classification == 'member' %} bg-purple-950/80 text-purple-400 border border-purple-800/80
+                        {% else %} bg-red-950/80 text-red-400 border border-red-800/80
+                        {% endif %}">
+                        {% if file.classification == 'public' %}
+                            <i class="fa-solid fa-globe text-[10px]"></i> Public Notice
+                        {% elif file.classification == 'member' %}
+                            <i class="fa-solid fa-users text-[10px]"></i> Club Member
+                        {% else %}
+                            <i class="fa-solid fa-lock text-[10px]"></i> Confidential
+                        {% endif %}
+                    </span>
+
+                    <span class="text-[11px] text-slate-400 font-medium bg-slate-800/70 px-2 py-0.5 rounded">
+                        {{ file.category }}
+                    </span>
+                </div>
+
+                <!-- File Title & Extension Icon -->
+                <div class="flex items-start gap-3 mt-2">
+                    <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center text-lg
+                        {% if file.extension in ['pdf'] %} bg-red-950/80 text-red-400 border border-red-800/50
+                        {% elif file.extension in ['py', 'js', 'html', 'css', 'json'] %} bg-cyan-950/80 text-cyan-400 border border-cyan-800/50
+                        {% elif file.extension in ['zip', 'rar', 'tar', 'gz'] %} bg-amber-950/80 text-amber-400 border border-amber-800/50
+                        {% elif file.extension in ['png', 'jpg', 'jpeg', 'svg'] %} bg-emerald-950/80 text-emerald-400 border border-emerald-800/50
+                        {% else %} bg-slate-800 text-slate-300 border border-slate-700
+                        {% endif %}">
+                        {% if file.extension == 'pdf' %}<i class="fa-solid fa-file-pdf"></i>
+                        {% elif file.extension in ['py', 'js', 'json'] %}<i class="fa-solid fa-file-code"></i>
+                        {% elif file.extension in ['zip', 'rar'] %}<i class="fa-solid fa-file-zipper"></i>
+                        {% elif file.extension in ['png', 'jpg', 'jpeg'] %}<i class="fa-solid fa-file-image"></i>
+                        {% else %}<i class="fa-solid fa-file-lines"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex-1 min-w-0">
+                        <a href="{{ url_for('file_detail', file_id=file.id) }}" class="font-bold text-white text-base group-hover:text-cyan-400 transition truncate block" title="{{ file.title }}">
+                            {{ file.title }}
+                        </a>
+                        <p class="text-xs text-slate-400 truncate mt-0.5 font-mono">
+                            {{ file.filename }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Description / Abstract -->
+                {% if file.description %}
+                <p class="text-xs text-slate-400 mt-3 line-clamp-2 leading-relaxed">
+                    {{ file.description }}
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Card Bottom: Metadata & Actions -->
+            <div class="mt-5 pt-3.5 border-t border-slate-800/80 space-y-3">
+                <div class="flex items-center justify-between text-[11px] text-slate-400">
+                    <span class="flex items-center gap-1">
+                        <i class="fa-solid fa-user-pen text-slate-500"></i> {{ file.uploader_name.split(' ')[0] }}
+                    </span>
+                    <span class="flex items-center gap-1 font-mono">
+                        <i class="fa-solid fa-hard-drive text-slate-500"></i> {{ file.file_size|filesize }}
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <i class="fa-solid fa-cloud-arrow-down text-slate-500"></i> {{ file.download_count }} downloads
+                    </span>
+                </div>
+
+                <!-- Action Button Cluster -->
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <a href="{{ url_for('file_detail', file_id=file.id) }}" class="text-center py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition">
+                        <i class="fa-solid fa-eye mr-1 text-slate-400"></i> Details & Preview
+                    </a>
+                    <a href="{{ url_for('download_file', file_id=file.id) }}" class="text-center py-2 px-3 rounded-xl bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white border border-cyan-800/60 text-xs font-semibold transition">
+                        <i class="fa-solid fa-download mr-1"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-12 text-center space-y-4">
+        <div class="w-16 h-16 rounded-2xl bg-slate-800 text-slate-500 flex items-center justify-center mx-auto text-2xl">
+            <i class="fa-solid fa-folder-open"></i>
+        </div>
+        <div class="space-y-1">
+            <h3 class="text-lg font-bold text-white">No documents matched your filter</h3>
+            <p class="text-sm text-slate-400 max-w-md mx-auto">
+                No files found for this category or clearance level. Try adjusting your search query or uploading a new document.
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('index') }}" class="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
+                Reset Filters
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

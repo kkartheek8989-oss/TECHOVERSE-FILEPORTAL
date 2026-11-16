@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Document | TechnoVault - Hari University{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Card Header -->
+    <div class="space-y-1 text-center sm:text-left">
+        <h1 class="text-2xl font-extrabold text-white flex items-center justify-center sm:justify-start gap-2">
+            <i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i>
+            Upload Document to TechnoVault
+        </h1>
+        <p class="text-sm text-slate-400">
+            Publish official circulars, share club development assets, or deposit confidential executive records.
+        </p>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="bg-slate-900 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-xl">
+        <form method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" class="space-y-6">
+
+            <!-- Drag & Drop File Zone -->
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Select File to Upload *</label>
+                <div id="drop-zone" class="border-2 border-dashed border-slate-700 hover:border-cyan-500 rounded-2xl p-8 text-center transition cursor-pointer bg-slate-950/60 group">
+                    <input type="file" name="file" id="file-input" required class="hidden">
+                    <div class="space-y-2">
+                        <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 text-cyan-400 flex items-center justify-center mx-auto text-2xl group-hover:scale-110 transition transform">
+                            <i class="fa-solid fa-file-arrow-up"></i>
+                        </div>
+                        <div class="text-sm font-semibold text-slate-200" id="file-chosen-text">
+                            Drag & drop your document here, or <span class="text-cyan-400 underline">browse</span>
+                        </div>
+                        <p class="text-xs text-slate-500 font-mono">
+                            Supports PDF, Office Docs, ZIP, Code (PY, JS, JSON), Text, Media (Up to 100 MB)
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Title & Category Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Document Title *</label>
+                    <input type="text" name="title" required placeholder="e.g. HU Circular: Hackathon Guidelines 2026"
+                           class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Repository Category *</label>
+                    <select name="category" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                        {% for cat in categories %}
+                            <option value="{{ cat }}">{{ cat }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Security Classification (Crucial) -->
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">Security Clearance & Visibility *</label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    
+                    <!-- Public -->
+                    <label class="relative flex flex-col p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-emerald-500 transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-950/20">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-emerald-400 uppercase flex items-center gap-1.5">
+                                <i class="fa-solid fa-bullhorn"></i> Public
+                            </span>
+                            <input type="radio" name="classification" value="public" checked class="text-emerald-500 focus:ring-emerald-500">
+                        </div>
+                        <span class="text-[11px] text-slate-400">
+                            Circulars, brochures, and open study materials. Visible to all students without login.
+                        </span>
+                    </label>
+
+                    <!-- Member Only -->
+                    <label class="relative flex flex-col p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-purple-500 transition has-[:checked]:border-purple-500 has-[:checked]:bg-purple-950/20">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-purple-400 uppercase flex items-center gap-1.5">
+                                <i class="fa-solid fa-users"></i> Member
+                            </span>
+                            <input type="radio" name="classification" value="member" class="text-purple-500 focus:ring-purple-500">
+                        </div>
+                        <span class="text-[11px] text-slate-400">
+                            Club internal repositories, workshop source code, team drafts. Requires Member login.
+                        </span>
+                    </label>
+
+                    <!-- Confidential -->
+                    <label class="relative flex flex-col p-4 bg-slate-950 border border-slate-800 rounded-xl cursor-pointer hover:border-red-500 transition has-[:checked]:border-red-500 has-[:checked]:bg-red-950/20 {% if current_user.role not in ['core', 'admin'] %}opacity-50 cursor-not-allowed{% endif %}">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold text-red-400 uppercase flex items-center gap-1.5">
+                                <i class="fa-solid fa-lock"></i> Confidential
+                            </span>
+                            <input type="radio" name="classification" value="confidential" {% if current_user.role not in ['core', 'admin'] %}disabled{% endif %} class="text-red-500 focus:ring-red-500">
+                        </div>
+                        <span class="text-[11px] text-slate-400">
+                            Executive Committee & Patron only. Financial audits, hackathon solutions, private contracts.
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Optional PIN Protection for Confidential / Sensitive Docs -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                        Secondary Access PIN (Optional)
+                    </label>
+                    <span class="text-[11px] text-slate-500">Dual-factor document protection</span>
+                </div>
+                <input type="password" name="access_pin" placeholder="Set a 4-8 digit numeric or alphanumeric PIN (e.g. 8899)"
+                       class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 font-mono">
+                <p class="text-[11px] text-slate-500 mt-1">
+                    If set, even users with clearance must provide this PIN to inspect or download the file.
+                </p>
+            </div>
+
+            <!-- Description / Abstract -->
+            <div>
+                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">Description & Reference Notes</label>
+                <textarea name="description" rows="3" placeholder="Provide background information, circular reference numbers, or workshop instructions..."
+                          class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"></textarea>
+            </div>
+
+            <!-- Submit Button Cluster -->
+            <div class="pt-4 flex items-center justify-end gap-3 border-t border-slate-800">
+                <a href="{{ url_for('index') }}" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-semibold transition">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white text-sm font-bold shadow-lg shadow-cyan-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                    <span>Securely Store File</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const chosenText = document.getElementById('file-chosen-text');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-cyan-500', 'bg-cyan-950/20');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-cyan-500', 'bg-cyan-950/20');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-cyan-500', 'bg-cyan-950/20');
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileLabel();
+        }
+    });
+
+    fileInput.addEventListener('change', updateFileLabel);
+
+    function updateFileLabel() {
+        if (fileInput.files && fileInput.files.length > 0) {
+            const f = fileInput.files[0];
+            chosenText.innerHTML = `<span class="text-cyan-400 font-bold">${f.name}</span> (${(f.size / (1024*1024)).toFixed(2)} MB)`;
+        }
+    }
+</script>
+{% endblock %}

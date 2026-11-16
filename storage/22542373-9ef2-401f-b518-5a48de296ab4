@@ -1,0 +1,8 @@
+[TECHNOVERSE CLUB INTERNAL - MEMBERS REPOSITORY]
+Document: Club Infrastructure Architecture & GitHub Org Standards
+Classification: CLUB MEMBER ACCESS ONLY
+
+1. Code Style Guide: PEP 8 with Black & Flake8 formatting.
+2. Branch Protection: Main branch requires 2 approvals from Core Committee.
+3. Server Access: Staging environment runs on Hari University Local Cloud cluster.
+4. Member Guidelines: Do not share club internal credentials or draft hackathon problem statements publicly.

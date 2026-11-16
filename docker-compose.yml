@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  technovault:
+    build: .
+    container_name: technovault-portal
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persistent local storage (No Supabase or external DB needed!)
+      - ./storage:/app/storage
+      - ./technoverse.db:/app/technoverse.db
+    environment:
+      - SECRET_KEY=technoverse-hari-univ-super-secret-key-2026
+      - PORT=5000
